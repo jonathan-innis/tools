@@ -33,7 +33,19 @@ func main() {
 	logger := lo.Must(zap.NewProduction()).Sugar()
 	logger = logger.With("from-repo", fmt.Sprintf("%s/%s", fromOwner, fromRepo), "to-repo", fmt.Sprintf("%s/%s", toOwner, toRepo))
 	client := NewClient(ctx, accessToken)
-	labels, _ := lo.Must2(client.Issues.ListLabels(ctx, fromOwner, fromRepo, &github.ListOptions{}))
+
+	var labels []*github.Label
+
+	// Iterate through all the pages to get all the labels
+	page := 0
+	for {
+		temp, res := lo.Must2(client.Issues.ListLabels(ctx, fromOwner, fromRepo, &github.ListOptions{Page: page}))
+		labels = append(labels, temp...)
+		if res.NextPage == 0 {
+			break
+		}
+		page = res.NextPage
+	}
 
 	for _, label := range labels {
 		_, _, err := client.Issues.CreateLabel(ctx, toOwner, toRepo, label)
