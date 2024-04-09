@@ -1,0 +1,21 @@
+name: HydrateProxy
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: false
+        default: latest
+jobs:
+  postsubmit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: hydrate-goproxy
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        cd hydrate-goproxy
+        go get -u github.com/aws/karpenter-provider-aws@HEAD
+        go mod download
+        go get -u github.com/aws/karpenter-provider-aws@${VERSION}
+        go mod download
